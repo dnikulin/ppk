@@ -1,0 +1,15 @@
+CXXFLAGS = '-O0 -std=c++98 -g3 -pthread' + \
+	' -Wall -Wextra -Wno-unused -fmessage-length=0' + \
+	' -I/usr/local/include -Iinclude -Isrc' + \
+	' -DPPK_LITTLE_ENDIAN'
+
+LDFLAGS = '-pthread'
+
+env = Environment(CXXFLAGS = CXXFLAGS, LINKFLAGS = LDFLAGS)
+env.BuildDir('obj', 'src', duplicate=0)
+
+libppk = env.StaticLibrary('bin/ppk', [
+    'obj/ppk/packet.cc',
+    'obj/ppk/bitio.cc',
+    'obj/ppk/except.cc'
+])
