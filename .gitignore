@@ -1,4 +1,6 @@
 /cpp/bin
 /cpp/obj
 /cpp/.scons*
+*.pyc
+*.pyo
 
