@@ -10,8 +10,6 @@
 #include <cstddef>
 #include <cstring>
 
-#include <endian.h>
-
 namespace ppk {
 
 template<int N>
