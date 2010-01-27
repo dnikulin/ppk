@@ -66,6 +66,18 @@ public:
         }
     }
 
+    template<class T>
+    T getItemRaw() {
+        T out;
+        get(&out, sizeof(T));
+        return out;
+    }
+
+    template<class T>
+    void getItemsRaw(T *values, size_t count) {
+        get(values, count * sizeof(T));
+    }
+
     template<class T, class CT>
     void getString(std::basic_string<T> &str) {
         size_t len = getItem<CT>();
