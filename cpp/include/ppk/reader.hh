@@ -18,8 +18,16 @@ class Reader {
 public:
 
     Reader(std::istream &in)
-    : m_in(in), m_byte(0), m_bit(8) {
+    : m_in(in), m_byte(0), m_bit(8), m_total(0) {
         m_in.exceptions(kStreamFlags);
+    }
+
+    size_t total() const {
+        return m_total;
+    }
+
+    void clearTotal() {
+        m_total = 0;
     }
 
     uint64_t getBits(uint8_t bits);
@@ -27,6 +35,7 @@ public:
 
     uint8_t get() {
         skipBits();
+        m_total += 1;
         return m_in.get();
     }
 
@@ -35,6 +44,7 @@ public:
 
         char *str = reinterpret_cast<char *>(bytes);
         m_in.read(str, count);
+        m_total += count;
     }
 
     template<class T>
@@ -74,6 +84,8 @@ private:
 
     uint8_t m_byte;
     uint8_t m_bit;
+
+    size_t m_total;
 };
 
 }
