@@ -22,6 +22,10 @@ public:
         m_in.exceptions(kStreamFlags);
     }
 
+    std::istream &stream() {
+        return m_in;
+    }
+
     size_t total() const {
         return m_total;
     }

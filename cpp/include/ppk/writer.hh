@@ -19,6 +19,10 @@ public:
     Writer(std::ostream &out)
     : m_out(out), m_byte(0), m_bit(0) {}
 
+    std::ostream &stream() {
+        return m_out;
+    }
+
     void putBits(uint8_t bits, uint64_t value);
     void flushBits();
 
