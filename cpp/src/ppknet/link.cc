@@ -21,7 +21,10 @@ void Link::connect(const std::string &host, const std::string &port) {
 }
 
 void Link::disconnect() {
-    m_socket.close();
+    if (m_socket.is_open() == true) {
+        m_socket.close();
+        disconnected();
+    }
 }
 
 void Link::connected() {
@@ -32,6 +35,7 @@ void Link::disconnected() {
 
 void Link::errored(const boost::system::error_code &error) {
     std::cerr << "Link error: " << error.message() << std::endl;
+    disconnect();
 }
 
 }
