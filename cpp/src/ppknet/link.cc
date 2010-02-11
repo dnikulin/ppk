@@ -34,7 +34,6 @@ void Link::disconnected() {
 }
 
 void Link::errored(const boost::system::error_code &error) {
-    std::cerr << "Link error: " << error.message() << std::endl;
     disconnect();
 }
 
