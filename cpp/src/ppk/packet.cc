@@ -53,6 +53,7 @@ bool pullPacket(std::string &out) {
 
 void pushPacket(const std::string &in) {
     pushPacket(in, std::cout);
+    std::cout.flush();
 }
 
 void wrapPacket(std::string &out, const std::string &in) {
