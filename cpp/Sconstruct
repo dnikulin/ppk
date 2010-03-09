@@ -3,10 +3,10 @@ from glob import glob
 def globsrc(pattern):
     return [line.replace('src', 'obj') for line in glob(pattern)]
 
-CXXFLAGS = '-O0 -std=c++98 -g3 -pthread' + \
+CXXFLAGS = '-O3 -march=core2 -std=c++98 -g3 -pthread' + \
 	' -Wall -Wextra -Wno-unused -fmessage-length=0' + \
 	' -I/usr/local/include -Iinclude -Isrc' + \
-	' -DPPK_LITTLE_ENDIAN'
+	' -DPPK_LITTLE_ENDIAN -fno-inline'
 
 LDFLAGS = '-pthread'
 
@@ -15,3 +15,7 @@ env.BuildDir('obj', 'src', duplicate=0)
 
 libppk = env.StaticLibrary('bin/ppk', globsrc('src/ppk/*.cc'))
 libppknet = env.StaticLibrary('bin/ppknet', globsrc('src/ppknet/*.cc'))
+
+env.Program('bin/ppk-tests', globsrc('src/tests/*.cc'),
+    LIBS = ['boost_unit_test_framework', libppk],
+    LINKFLAGS = LDFLAGS + ' -static -Wl,-static')
