@@ -11,11 +11,6 @@
 
 namespace ppk {
 
-static const std::ios::iostate kStreamFlags =
-        std::ios_base::badbit |
-        std::ios_base::eofbit |
-        std::ios_base::failbit;
-
 // Packet IO routines (any stream)
 bool pullPacket(std::string &out, std::istream &in);
 void pushPacket(const std::string &in, std::ostream &out);

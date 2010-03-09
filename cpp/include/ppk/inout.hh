@@ -18,7 +18,7 @@ template<> void encode(std::string &out, const T &obj) { \
 } \
 template<> void decode(const std::string &in, T &obj) { \
     std::istringstream sin(in); \
-    sin.exceptions(kStreamFlags); \
+    sin.exceptions(~std::ios::goodbit); \
     try {obj.readIn(sin);} \
     catch (std::ios_base::failure &ex) { \
         std::string er(ex.what()); \

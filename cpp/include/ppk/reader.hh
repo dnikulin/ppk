@@ -19,7 +19,7 @@ public:
 
     Reader(std::istream &in)
     : m_in(in), m_byte(0), m_bit(8), m_total(0) {
-        m_in.exceptions(kStreamFlags);
+        m_in.exceptions(~std::ios::goodbit);
     }
 
     std::istream &stream() {

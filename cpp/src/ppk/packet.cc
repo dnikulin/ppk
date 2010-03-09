@@ -12,25 +12,21 @@
 
 namespace ppk {
 
-static bool works(const std::istream &in) {
-    return (in.bad() || in.eof() || in.fail()) == false;
-}
-
 bool pullPacket(std::string &out, std::istream &in) {
-    if (works(in)) {
+    if (in.good() == true) {
         out.clear();
 
         char head[sizeof(uint32_t)] = {0,};
         in.read(head, sizeof(head));
 
-        if (works(in)) {
+        if (in.good() == true) {
             uint32_t size = 0;
             swapBytes<sizeof(head)>(&size, head);
 
             out.resize(size);
             in.read(&out[0], size);
 
-            return works(in);
+            return in.good() == true;
         }
     }
 
@@ -54,15 +50,6 @@ bool pullPacket(std::string &out) {
 void pushPacket(const std::string &in) {
     pushPacket(in, std::cout);
     std::cout.flush();
-}
-
-void wrapPacket(std::string &out, const std::string &in) {
-    const uint32_t size = in.size();
-
-    out.resize(size + sizeof(uint32_t));
-
-    swap<uint32_t>(&out[0], &size);
-    memcpy(&out[sizeof(uint32_t)], &in[0], size);
 }
 
 }
