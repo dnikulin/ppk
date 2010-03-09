@@ -9,14 +9,15 @@
 
 namespace ppk {
 
-template<class T>
-T min(T a, T b) {
-    return (a < b) ? a : b;
-}
+static uint64_t kZero64 = 0;
+static uint64_t kOne64 = 1;
+static uint64_t kFull64 = ~kZero64;
 
 static uint64_t mask64(uint64_t bits) {
     assert (bits <= 64);
-    return (((uint64_t) 1) << bits) - 1;
+    if (bits == 64)
+        return kFull64;
+    return (kOne64 << bits) - kOne64;
 }
 
 uint64_t Reader::getBits(uint8_t bits) {
@@ -30,7 +31,7 @@ uint64_t Reader::getBits(uint8_t bits) {
     while (done < bits) {
         assert (m_bit <= 8);
 
-        uint8_t more = min(8 - m_bit, bits - done);
+        uint8_t more = std::min(8 - m_bit, bits - done);
         assert (more <= 8);
 
         if (more == 0) {
@@ -39,21 +40,11 @@ uint64_t Reader::getBits(uint8_t bits) {
             continue;
         }
 
-        uint8_t lobits = 8 - (m_bit + more);
-        assert (lobits < 8);
-        assert ((m_bit + more + lobits) == 8);
+        uint64_t value = m_byte >> m_bit;
+        value &= mask64(more);
+        assert (value <= 0xFF);
 
-        uint8_t value = m_byte >> lobits;
-
-        if (more != 8)
-            value &= ((1 << more) - 1);
-
-        uint64_t oldout = out;
-        out <<= more;
-        assert (out >= oldout);
-        assert ((out & value) == 0);
-
-        out |= value;
+        out |= (value << done);
         m_bit += more;
         done += more;
         assert (done <= bits);
@@ -66,11 +57,11 @@ uint64_t Reader::getBits(uint8_t bits) {
 
 void Reader::skipBits() {
     m_byte = 0;
-    m_bit = 0;
+    m_bit = 8;
 }
 
 void Writer::putBits(uint8_t bits, uint64_t value) {
-    assert (m_bit <= 8);
+    assert (m_bit < 8);
     assert (bits > 0);
     assert (bits <= 64);
 
@@ -79,22 +70,18 @@ void Writer::putBits(uint8_t bits, uint64_t value) {
     uint8_t done = 0;
 
     while (done < bits) {
-        assert (m_bit <= 8);
+        assert (m_bit < 8);
 
-        uint8_t more = min(8 - m_bit, bits - done);
+        uint8_t more = std::min(8 - m_bit, bits - done);
+        assert (more > 0);
         assert (more <= 8);
 
-        if (more == 0) {
-            flushBits();
-            continue;
-        }
-
-        uint64_t downvalue = value >> (bits - done - more);
+        uint64_t downvalue = value >> done;
         assert (downvalue <= value);
         assert ((downvalue & mask64(bits)) == downvalue);
 
         uint8_t byte = (uint8_t) (downvalue & mask64(more));
-        uint8_t shifted = byte << (8 - m_bit - more);
+        uint8_t shifted = byte << m_bit;
         assert (shifted >= byte);
         assert ((byte == 0) == (shifted == 0));
 
