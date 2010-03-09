@@ -10,13 +10,13 @@
 namespace ppk {
 
 // Encoding template functions
-template<class T> void encode(std::string &out, const T &obj);
-template<class T> void decode(const std::string &in, T &obj);
+template<class T> void encode(Packet &out, const T &obj);
+template<class T> void decode(const Packet &in, T &obj);
 
 // High-level encoded routines
 template<class T>
 bool pull(T &obj) {
-    std::string in;
+    Packet in;
     if (pullPacket(in) == true) {
         decode(in, obj);
         return true;
@@ -26,7 +26,7 @@ bool pull(T &obj) {
 
 template<class T>
 void push(T const &obj) {
-    std::string out;
+    Packet out;
     encode(out, obj);
     pushPacket(out);
 }

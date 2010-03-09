@@ -12,16 +12,13 @@
 
 namespace ppk {
 
-void PacketLink::writePacket(const std::string &body) {
-    m_outbound.push_back(body);
+void PacketLink::writePacket(const Packet &packet) {
+    m_outbound.push_back(packet);
     startWriting();
 }
 
-void PacketLink::writePacket(const Packet &packet) {
-    static const std::string blank;
-    m_outbound.push_back(blank);
-    packet.finish(m_outbound.back());
-    startWriting();
+void PacketLink::writePacket(const std::ostringstream &stream) {
+    writePacket(Packet(stream.str()));
 }
 
 void PacketLink::startWriting() {
@@ -36,7 +33,7 @@ void PacketLink::startWriting() {
     if (m_outbound.empty() == true)
         return;
 
-    const std::string &packet(m_outbound.front());
+    const Packet &packet(m_outbound.front());
     m_outsize = ppk::swap<uint32_t>(packet.size());
 
     m_writing = true;
@@ -59,7 +56,7 @@ void PacketLink::wrotePacketSize(const boost::system::error_code &error, size_t 
     assert (m_outbound.empty() == false);
     assert (size == sizeof(m_outsize));
 
-    const std::string &packet(m_outbound.front());
+    const Packet &packet(m_outbound.front());
 
     // Skip writing empty packet
     if (packet.size() == 0) {
@@ -68,7 +65,7 @@ void PacketLink::wrotePacketSize(const boost::system::error_code &error, size_t 
     }
 
     boost::asio::async_write(m_socket,
-            boost::asio::buffer(packet),
+            boost::asio::buffer(packet.chars(), packet.size()),
             boost::bind(&PacketLink::wrotePacket, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));

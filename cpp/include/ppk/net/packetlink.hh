@@ -6,11 +6,12 @@
 #define __PPK_NET_PACKETLINK_HH__
 
 #include "ppk/net/link.hh"
-#include "ppk/net/packet.hh"
-
-#include <boost/enable_shared_from_this.hpp>
+#include "ppk/packet.hh"
 
 #include <deque>
+#include <sstream>
+
+#include <boost/enable_shared_from_this.hpp>
 
 namespace ppk {
 
@@ -23,8 +24,8 @@ public:
     PacketLink(boost::asio::io_service &ios);
     virtual ~PacketLink();
 
-    void writePacket(const std::string &body);
     void writePacket(const Packet &packet);
+    void writePacket(const std::ostringstream &stream);
 
     void startReading();
 
@@ -39,7 +40,7 @@ protected:
     void wrotePacket(const boost::system::error_code &error, size_t size);
     void startWriting();
 
-    virtual void readPacket(const std::string &body) = 0;
+    virtual void readPacket(const Packet &packet) = 0;
 
     bool m_reading;
     bool m_writing;
@@ -47,21 +48,8 @@ protected:
     uint32_t m_insize;
     uint32_t m_outsize;
 
-    std::string m_inbound;
-    std::deque<std::string> m_outbound;
-};
-
-class ReaderLink : public PacketLink {
-public:
-
-    ReaderLink(boost::asio::io_service &ios);
-    virtual ~ReaderLink();
-
-protected:
-
-    virtual void readPacket(const std::string &body);
-
-    virtual void readPacket(ppk::Reader &in) = 0;
+    Packet m_inbound;
+    std::deque<Packet> m_outbound;
 };
 
 }

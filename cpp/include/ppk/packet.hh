@@ -9,19 +9,55 @@
 #include <ostream>
 #include <string>
 
+#include <boost/cstdint.hpp>
+#include <boost/intrusive_ptr.hpp>
+
 namespace ppk {
 
+struct PacketData;
+
+class Packet {
+public:
+
+    Packet();
+    Packet(uint32_t size);
+    Packet(uint32_t size, const void *data);
+    Packet(const std::string &str);
+    ~Packet();
+
+    void resize(uint32_t size);
+    void clear();
+    void reset();
+
+    size_t size() const;
+
+    uint8_t *bytes();
+    const uint8_t *bytes() const;
+
+    char *chars();
+    const char *chars() const;
+
+private:
+
+    boost::intrusive_ptr<PacketData> m_data;
+};
+
+Packet makePacket(uint32_t size);
+Packet copyPacket(uint32_t size, const void *data);
+
 // Packet IO routines (any stream)
-bool pullPacket(std::string &out, std::istream &in);
-void pushPacket(const std::string &in, std::ostream &out);
+bool pullPacket(Packet &out, std::istream &in);
+void pushPacket(const Packet &in, std::ostream &out);
 
 // Packet IO routines (std::cin, std::cout)
-bool pullPacket(std::string &out);
-void pushPacket(const std::string &in);
+bool pullPacket(Packet &out);
+void pushPacket(const Packet &in);
 
-// Packet wrapper
-void wrapPacket(std::string &out, const std::string &in);
+}
 
+namespace boost {
+void intrusive_ptr_add_ref(ppk::PacketData *pack);
+void intrusive_ptr_release(ppk::PacketData *pack);
 }
 
 #endif /* __PPK_PACKET_HH__ */

@@ -9,17 +9,22 @@
 
 #include <sstream>
 
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+
 #define PPK_BIND_INOUT(T) \
 namespace ppk { \
-template<> void encode(std::string &out, const T &obj) { \
+template<> void encode(ppk::Packet &out, const T &obj) { \
+    out.clear(); \
     std::ostringstream sout; \
     obj.writeOut(sout); \
-    sout.str().swap(out); \
+    out = Packet(sout.str()); \
 } \
-template<> void decode(const std::string &in, T &obj) { \
-    std::istringstream sin(in); \
-    sin.exceptions(~std::ios::goodbit); \
-    try {obj.readIn(sin);} \
+template<> void decode(const ppk::Packet &in, T &obj) { \
+    namespace io = boost::iostreams; \
+    io::stream<io::array_source> buf(in.chars(), in.size()); \
+    buf.exceptions(~std::ios::goodbit); \
+    try {obj.readIn(buf);} \
     catch (std::ios_base::failure &ex) { \
         std::string er(ex.what()); \
         throw FormatError(er);} \

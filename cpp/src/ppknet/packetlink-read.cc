@@ -47,7 +47,8 @@ void PacketLink::havePacketSize(const boost::system::error_code &error, size_t s
     m_insize = ppk::swap<uint32_t>(m_insize);
 
     if (m_insize == 0) {
-        readPacket(kBlankString);
+        Packet blank;
+        readPacket(blank);
         m_reading = false;
         m_insize = kBadPacketSize;
         startReading();
@@ -57,7 +58,7 @@ void PacketLink::havePacketSize(const boost::system::error_code &error, size_t s
     m_inbound.resize(m_insize);
 
     boost::asio::async_read(m_socket,
-            boost::asio::buffer(&m_inbound[0], m_insize),
+            boost::asio::buffer(m_inbound.bytes(), m_insize),
             boost::bind(&PacketLink::havePacket, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
