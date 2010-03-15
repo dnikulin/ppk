@@ -45,7 +45,8 @@ def fixInputMode():
     '''
     global __FixedIn
     if (not __FixedIn) and (sys.platform == "win32"):
-        import os, msvcrt
+        os = __import__("os")
+        msvcrt = __import__("msvcrt")
         msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
         __FixedIn = True
 
@@ -55,7 +56,8 @@ def fixOutputMode():
     '''
     global __FixedOut
     if (not __FixedOut) and (sys.platform == "win32"):
-        import os, msvcrt
+        os = __import__("os")
+        msvcrt = __import__("msvcrt")
         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
         __FixedOut = True
 
