@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (c) 2009 Dmitri Nikulin
 # See LICENSE-MIT.txt for details
 # Part of the PPK project
