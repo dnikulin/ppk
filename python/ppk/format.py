@@ -11,7 +11,10 @@ from cStringIO import StringIO
 
 from errors import FormatError
 
-__all__ = ["Reader", "Writer"]
+__all__ = ["Reader", "Writer", "mask"]
+
+def mask(bits):
+    return (1L << bits) - 1L
 
 class Reader(object):
     '''
@@ -30,6 +33,10 @@ class Reader(object):
         else:
             raise "string or file must be non-None"
 
+        # Bit reader buffer
+        self.byte = 0
+        self.byte_bits = 8
+
     def readStruct(self, format):
         '''
         readStruct(format) -> tuple
@@ -38,7 +45,7 @@ class Reader(object):
         '''
         size = struct.calcsize(format)
         bytes = self.stream.read(size)
-        if len(bytes) < size:
+        if len(bytes) != size:
             raise FormatError()
         return struct.unpack(format, bytes)
 
@@ -50,9 +57,57 @@ class Reader(object):
         '''
         size = self.readStruct("!I")[0]
         bytes = self.stream.read(size)
-        if len(bytes) < size:
+        if len(bytes) != size:
             raise FormatError()
         return bytes.decode("utf-8")
+
+    def readBits(self, bits):
+        assert bits > 0
+        assert bits <= 64
+        assert self.byte_bits >= 0
+        assert self.byte_bits <= 8
+
+        out = 0
+        done = 0
+
+        while done < bits:
+            assert self.byte_bits >= 0
+            assert self.byte_bits <= 8
+
+            more = min(8 - self.byte_bits, bits - done)
+            assert more >= 0
+            assert more <= 8
+
+            if more < 1:
+                self.byte = ord(self.stream.read(1))
+                assert self.byte >= 0
+                assert self.byte <= 0xFF
+                self.byte_bits = 0
+                continue
+
+            value = self.byte >> self.byte_bits
+            value &= mask(more)
+            assert value >= 0
+            assert value <= 0xFF
+
+            value <<= done
+            out |= value
+
+            done += more
+            assert done <= bits
+
+            self.byte_bits += more
+            assert self.byte_bits >= 0
+            assert self.byte_bits <= 8
+
+        assert (out & mask(bits)) == out
+        return out
+
+    def skipBits(self):
+        self.byte = 0
+        self.byte_bits = 8
+
+
 
 class Writer(object):
     '''
@@ -70,10 +125,15 @@ class Writer(object):
         else:
             self.stream = stream
 
+        # Bit writer buffer
+        self.byte = 0
+        self.byte_bits = 0
+
     def writeStruct(self, format, *items):
         '''
         Write a structure.
         '''
+        self.flushBits()
         bytes = struct.pack(format, *items)
         self.stream.write(bytes)
 
@@ -81,6 +141,7 @@ class Writer(object):
         '''
         Write a UTF8-encoded string.
         '''
+        self.flushBits()
         bytes = string.encode("utf-8")
         self.writeStruct("!I", len(bytes))
         self.stream.write(bytes)
@@ -90,4 +151,51 @@ class Writer(object):
         finish() -> contents
         Retrieve stream contents if backed by StringIO.
         '''
+        self.flushBits()
         return self.stream.getvalue()
+
+    def writeBits(self, bits, value):
+        assert bits > 0
+        assert bits <= 64
+        assert self.byte_bits >= 0
+        assert self.byte_bits <= 8
+
+        assert (value & mask(bits)) == value
+
+        done = 0
+
+        while done < bits:
+            assert self.byte_bits >= 0
+            assert self.byte_bits <= 8
+
+            more = min(8 - self.byte_bits, bits - done)
+            assert more > 0
+            assert more <= 8
+
+            downvalue = value >> done
+            assert downvalue <= value
+            assert (downvalue & mask(bits)) == downvalue
+
+            byte = downvalue & mask(more)
+            shifted = byte << self.byte_bits
+            assert shifted >= byte
+            assert (byte == 0) == (shifted == 0)
+
+            self.byte |= shifted
+
+            done += more
+            assert done <= bits
+
+            self.byte_bits += more
+            assert self.byte_bits >= 0
+            assert self.byte_bits <= 8
+
+            if self.byte_bits >= 8:
+                self.flushBits()
+
+    def flushBits(self):
+        if self.byte_bits > 0:
+            self.stream.write(chr(self.byte))
+            self.byte = 0
+            self.byte_bits = 0
+
