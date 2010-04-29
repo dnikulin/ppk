@@ -9,6 +9,7 @@ Supports packet stream filter module implementation.
 
 from errors import *
 from format import *
+from bitio import *
 from rawio import *
 from objio import *
 from tools import *

@@ -9,12 +9,10 @@ Convenience classes for packet encoding/decoding.
 import struct
 from cStringIO import StringIO
 
+from bitio import BitReader, BitWriter
 from errors import FormatError
 
-__all__ = ["Reader", "Writer", "mask"]
-
-def mask(bits):
-    return (1L << bits) - 1L
+__all__ = ["Reader", "Writer"]
 
 class Reader(object):
     '''
@@ -34,8 +32,7 @@ class Reader(object):
             raise "string or file must be non-None"
 
         # Bit reader buffer
-        self.byte = 0
-        self.byte_bits = 8
+        self.bitter = BitReader(self.readByte)
 
     def readStruct(self, format):
         '''
@@ -61,51 +58,24 @@ class Reader(object):
             raise FormatError()
         return bytes.decode("utf-8")
 
+    def readByte(self):
+        '''
+        readByte() -> int
+        Read a single byte.
+        '''
+        return ord(self.stream.read(1))
+
     def readBits(self, bits):
-        assert bits > 0
-        assert bits <= 64
-        assert self.byte_bits >= 0
-        assert self.byte_bits <= 8
-
-        out = 0
-        done = 0
-
-        while done < bits:
-            assert self.byte_bits >= 0
-            assert self.byte_bits <= 8
-
-            more = min(8 - self.byte_bits, bits - done)
-            assert more >= 0
-            assert more <= 8
-
-            if more < 1:
-                self.byte = ord(self.stream.read(1))
-                assert self.byte >= 0
-                assert self.byte <= 0xFF
-                self.byte_bits = 0
-                continue
-
-            value = self.byte >> self.byte_bits
-            value &= mask(more)
-            assert value >= 0
-            assert value <= 0xFF
-
-            value <<= done
-            out |= value
-
-            done += more
-            assert done <= bits
-
-            self.byte_bits += more
-            assert self.byte_bits >= 0
-            assert self.byte_bits <= 8
-
-        assert (out & mask(bits)) == out
-        return out
+        '''
+        Read bits (see ppk.bitio.BitReader).
+        '''
+        return self.bitter(bits)
 
     def skipBits(self):
-        self.byte = 0
-        self.byte_bits = 8
+        '''
+        Skip buffered bits (see ppk.bitio.BitReader).
+        '''
+        self.bitter.skip()
 
 
 
@@ -126,8 +96,7 @@ class Writer(object):
             self.stream = stream
 
         # Bit writer buffer
-        self.byte = 0
-        self.byte_bits = 0
+        self.bitter = BitWriter(self.writeByte)
 
     def writeStruct(self, format, *items):
         '''
@@ -146,6 +115,24 @@ class Writer(object):
         self.writeStruct("!I", len(bytes))
         self.stream.write(bytes)
 
+    def writeByte(self, value):
+        '''
+        Write a single byte.
+        '''
+        self.stream.write(chr(value))
+
+    def writeBits(self, bits, value):
+        '''
+        Write a series of bits (see ppk.bitio.BitWriter).
+        '''
+        self.bitter(bits, value)
+
+    def flushBits(self):
+        '''
+        Flush buffered bits, if any (see ppk.bitio.BitWriter).
+        '''
+        self.bitter.flush()
+
     def finish(self):
         '''
         finish() -> contents
@@ -153,49 +140,3 @@ class Writer(object):
         '''
         self.flushBits()
         return self.stream.getvalue()
-
-    def writeBits(self, bits, value):
-        assert bits > 0
-        assert bits <= 64
-        assert self.byte_bits >= 0
-        assert self.byte_bits <= 8
-
-        assert (value & mask(bits)) == value
-
-        done = 0
-
-        while done < bits:
-            assert self.byte_bits >= 0
-            assert self.byte_bits <= 8
-
-            more = min(8 - self.byte_bits, bits - done)
-            assert more > 0
-            assert more <= 8
-
-            downvalue = value >> done
-            assert downvalue <= value
-            assert (downvalue & mask(bits)) == downvalue
-
-            byte = downvalue & mask(more)
-            shifted = byte << self.byte_bits
-            assert shifted >= byte
-            assert (byte == 0) == (shifted == 0)
-
-            self.byte |= shifted
-
-            done += more
-            assert done <= bits
-
-            self.byte_bits += more
-            assert self.byte_bits >= 0
-            assert self.byte_bits <= 8
-
-            if self.byte_bits >= 8:
-                self.flushBits()
-
-    def flushBits(self):
-        if self.byte_bits > 0:
-            self.stream.write(chr(self.byte))
-            self.byte = 0
-            self.byte_bits = 0
-
