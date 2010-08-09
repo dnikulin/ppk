@@ -34,6 +34,13 @@ class Reader(object):
         # Bit reader buffer
         self.bitter = BitReader(self.readByte)
 
+    def read(self, size):
+        '''
+        read(size) -> string
+        Read bytes into a raw string.
+        '''
+        return self.stream.read(size)
+
     def readStruct(self, format):
         '''
         readStruct(format) -> tuple
@@ -41,7 +48,7 @@ class Reader(object):
         Raises FormatError() if bytes were unavailable.
         '''
         size = struct.calcsize(format)
-        bytes = self.stream.read(size)
+        bytes = self.read(size)
         if len(bytes) != size:
             raise FormatError()
         return struct.unpack(format, bytes)
@@ -53,7 +60,7 @@ class Reader(object):
         Raises FormatError() if bytes were unavailable.
         '''
         size = self.readStruct("!I")[0]
-        bytes = self.stream.read(size)
+        bytes = self.read(size)
         if len(bytes) != size:
             raise FormatError()
         return bytes.decode("utf-8")
@@ -63,7 +70,7 @@ class Reader(object):
         readByte() -> int
         Read a single byte.
         '''
-        return ord(self.stream.read(1))
+        return ord(self.read(1))
 
     def readBits(self, bits):
         '''
