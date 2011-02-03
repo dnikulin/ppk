@@ -10,8 +10,6 @@
 
 #include <istream>
 
-#include <stdint.h>
-
 namespace ppk {
 
 class Reader {

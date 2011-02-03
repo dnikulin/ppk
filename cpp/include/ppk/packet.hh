@@ -5,12 +5,12 @@
 #ifndef __PPK_PACKET_HH__
 #define __PPK_PACKET_HH__
 
+#include <boost/cstdint.hpp>
+#include <boost/intrusive_ptr.hpp>
+
 #include <istream>
 #include <ostream>
 #include <string>
-
-#include <boost/cstdint.hpp>
-#include <boost/intrusive_ptr.hpp>
 
 namespace ppk {
 

@@ -5,7 +5,7 @@
 #ifndef __PPK_SWAP_HH__
 #define __PPK_SWAP_HH__
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 #include <cstddef>
 #include <cstring>

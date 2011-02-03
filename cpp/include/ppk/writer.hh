@@ -9,8 +9,6 @@
 
 #include <ostream>
 
-#include <stdint.h>
-
 namespace ppk {
 
 class Writer {
